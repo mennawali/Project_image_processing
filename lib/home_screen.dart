@@ -99,12 +99,22 @@ class HomeScreen extends StatelessWidget {
                     ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 5),
-                      child: Text(
-                        "try it now".tr(),
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xff02051F),
+                      child: Container(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [Color(0xff6573ED), Color(0xff14D2E6)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            ),
+                            borderRadius: BorderRadius.circular(25),
+                          ),
+                        child: Text(
+                          "try it now".tr(),
+                          style: TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xff02051F),
+                          ),
                         ),
                       ),
                     ),

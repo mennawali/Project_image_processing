@@ -85,12 +85,29 @@ class _TryNowWidgetState extends State<TryNowWidget> {
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
           SizedBox(height: 40),
-          Text('try_now', style: TextStyle(color: Colors.white)).tr(),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 45, vertical:25),
+          ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Color(0xff090915)),
             onPressed: _showPicker,
-            child: Text('camera_or_gallery').tr(),
-          ),
+            child: Container(
+                child: Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [Color(0xff6573ED), Color(0xff14D2E6)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                    child:
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 5),
+                      child: Text('camera_or_gallery', style: TextStyle(color: Colors.black,fontSize:25)).tr(),
+                    )),
+
+          ),),
           SizedBox(height: 20),
           // Display the selected or captured image
           if (_imagePath != null)
