@@ -1,10 +1,11 @@
+// when taking picture
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
-
+import 'package:project_image_processing/Img%20processing%20screen/UI3.dart';
 class CameraScreen extends StatefulWidget {
   final CameraDescription camera;
 
-  const CameraScreen({Key? key, required this.camera}) : super(key: key);
+  const CameraScreen({super.key, required this.camera});
 
   @override
   _CameraScreenState createState() => _CameraScreenState();
@@ -30,12 +31,30 @@ class _CameraScreenState extends State<CameraScreen> {
     super.dispose();
   }
 
+  // Future<void> _takePicture() async {
+  //   try {
+  //     await _initializeControllerFuture; // Ensure the camera is initialized
+  //     final XFile image = await _controller.takePicture(); // Take a picture
+  //
+  //     Navigator.pop(context, image.path); // Return the image path to TryNowWidget
+  //   } catch (e) {
+  //     print("Error while taking picture: $e"); // Handle errors
+  //     Navigator.pop(context); // Close camera on error
+  //   }
+  // }
+
   Future<void> _takePicture() async {
     try {
       await _initializeControllerFuture; // Ensure the camera is initialized
       final XFile image = await _controller.takePicture(); // Take a picture
 
-      Navigator.pop(context, image.path); // Return the image path to TryNowWidget
+      // Navigate to PhotoEditorScreen and pass the image path
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PhotoEditorScreen(imagePath: image.path),
+        ),
+      );
     } catch (e) {
       print("Error while taking picture: $e"); // Handle errors
       Navigator.pop(context); // Close camera on error
@@ -59,13 +78,13 @@ class _CameraScreenState extends State<CameraScreen> {
                   child: FloatingActionButton(
                     onPressed: _takePicture, // Capture photo
                     backgroundColor: Colors.white, // Button color
-                    child: Icon(Icons.camera_alt, color: Colors.black), // Camera icon color
+                    child: const Icon(Icons.camera_alt, color: Colors.black), // Camera icon color
                   ),
                 ),
               ],
             );
           } else {
-            return Center(child: CircularProgressIndicator()); // Loading indicator
+            return const Center(child: CircularProgressIndicator()); // Loading indicator
           }
         },
       ),

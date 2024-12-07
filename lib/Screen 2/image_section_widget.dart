@@ -6,11 +6,11 @@ class ImageSectionWidget extends StatelessWidget {
   final Function(String) onImageSelected;
 
   const ImageSectionWidget({
-    Key? key,
+    super.key,
     required this.title,
     required this.imagePaths,
     required this.onImageSelected,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -19,9 +19,9 @@ class ImageSectionWidget extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Text(title, style: TextStyle(color: Colors.white, fontSize: 20)),
+          child: Text(title, style: const TextStyle(color: Colors.white, fontSize: 20)),
         ),
-        Container(
+        SizedBox(
           height: 200,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
@@ -31,10 +31,10 @@ class ImageSectionWidget extends StatelessWidget {
                 onTap: () => onImageSelected(imagePaths[index]),
                 child: Container(
                   width: 180,
-                  margin: EdgeInsets.symmetric(horizontal: 5),
+                  margin: const EdgeInsets.symmetric(horizontal: 5),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
                         blurRadius: 6,
@@ -49,7 +49,7 @@ class ImageSectionWidget extends StatelessWidget {
                       imagePaths[index],
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
-                        return Icon(Icons.broken_image, color: Colors.grey, size: 100);
+                        return const Icon(Icons.broken_image, color: Colors.grey, size: 100);
                       },
                     ),
                   ),

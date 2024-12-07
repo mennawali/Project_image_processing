@@ -1,7 +1,8 @@
 import 'package:easy_localization/easy_localization.dart';
 
 import 'package:flutter/material.dart';
-import 'package:project_image_processing/try_now_widget.dart';
+import 'package:project_image_processing/Screen%202/try_now_widget.dart';
+
 
 class HomeScreen extends StatelessWidget {
   static const String routeName = 'home';
@@ -21,15 +22,15 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 30),
                 child: GestureDetector(
                   onTap: () {
-                    context.setLocale(Locale('en'));
+                    context.setLocale(const Locale('en'));
                   },
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.black12,
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 4),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 13, vertical: 4),
                       child: Text(
                         'English',
                         style: TextStyle(
@@ -46,15 +47,15 @@ class HomeScreen extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 30),
                 child: GestureDetector(
                   onTap: () {
-                    context.setLocale(Locale('ar'));
+                    context.setLocale(const Locale('ar'));
                   },
                   child: Container(
                     decoration: BoxDecoration(
                       color: Colors.black12,
                       borderRadius: BorderRadius.circular(30),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 18, vertical: 6),
                       child: Text(
                         'عربي',
                         style: TextStyle(
@@ -75,13 +76,13 @@ class HomeScreen extends StatelessWidget {
               Text(
                 "edit photos like a pro in just one click".tr(),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 40,
                   color: Colors.white,
                 ),
               ),
-              SizedBox(height: 13),
+              const SizedBox(height: 13),
               GestureDetector(
                 onTap: () {
                   Navigator.pushNamed(context,TryNowWidget.routeName);
@@ -90,7 +91,7 @@ class HomeScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 140),
                   child: Container(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         colors: [Color(0xff6573ED), Color(0xff14D2E6)],
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
@@ -100,17 +101,17 @@ class HomeScreen extends StatelessWidget {
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 45, vertical: 5),
                       child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [Color(0xff6573ED), Color(0xff14D2E6)],
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                            ),
-                            borderRadius: BorderRadius.circular(25),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xff6573ED), Color(0xff14D2E6)],
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
                           ),
+                          borderRadius: BorderRadius.circular(25),
+                        ),
                         child: Text(
                           "try it now".tr(),
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w700,
                             color: Color(0xff02051F),
