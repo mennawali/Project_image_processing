@@ -2,12 +2,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart'; // Import camera package
 import 'package:permission_handler/permission_handler.dart';
+import 'package:project_image_processing/Img%20processing%20screen/PhotoEditorProvider.dart';
 import 'package:project_image_processing/Img%20processing%20screen/UI3.dart';
 import 'package:project_image_processing/Screen%202/try_now_widget.dart';
-import 'package:project_image_processing/home_screen.dart'; // Import permission handler
+import 'package:project_image_processing/home_screen.dart';
+import 'package:provider/provider.dart';
 
+ // Import permission handler
 
 Future<void> main() async {
+  // Initialize Flutter bindings
   WidgetsFlutterBinding.ensureInitialized();
 
   // Request necessary permissions (camera and microphone)
@@ -25,6 +29,7 @@ Future<void> main() async {
   // Initialize the available cameras
   final cameras = await availableCameras(); // Get the list of available cameras
 
+  // Run the app with EasyLocalization and passed cameras
   runApp(
     EasyLocalization(
       supportedLocales: const [
@@ -34,7 +39,12 @@ Future<void> main() async {
       path: 'assets/translations',
       saveLocale: true,
       startLocale: const Locale("en"),
-      child: MyApp(cameras: cameras), // Pass cameras to MyApp
+      child: MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => AppImageProvider()), // Add AppImageProvider
+        ],
+        child: MyApp(cameras: cameras), // Pass cameras to MyApp
+      ),
     ),
   );
 }
@@ -83,9 +93,9 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       initialRoute: HomeScreen.routeName,
       routes: {
-        HomeScreen.routeName: (context) =>  const HomeScreen(),
-        TryNowWidget.routeName: (context) =>  TryNowWidget(cameras: cameras), // Pass cameras to TryNowWidget
-        PhotoEditorScreen.routeName: (context) =>  const PhotoEditorScreen(imagePath: ''), // Add PhotoEditorScreen route
+        HomeScreen.routeName: (context) => const HomeScreen(),
+        TryNowWidget.routeName: (context) => TryNowWidget(cameras: cameras), // Pass cameras to TryNowWidget
+        PhotoEditorScreen.routeName: (context) => PhotoEditorScreen(imagePath: ''), // Add PhotoEditorScreen route
       },
     );
   }

@@ -1,11 +1,18 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data'; // Import to use Uint8List
+import 'dart:typed_data';
+import 'dart:ui';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 class PhotoEditorScreen extends StatefulWidget {
   final String imagePath;
-  const PhotoEditorScreen({super.key, required this.imagePath});
+
+  const PhotoEditorScreen({Key? key, required this.imagePath}) : super(key: key);
+
   static const routeName = '/photo-editor';
 
   @override
@@ -13,206 +20,308 @@ class PhotoEditorScreen extends StatefulWidget {
 }
 
 class _PhotoEditorScreenState extends State<PhotoEditorScreen> {
-  double brightnessValue = 0;
-  double contrastValue = 0;
-  double saturationValue = 0;
-  double hueValue = 0;
-  int selectedSettingIndex = -1;
+  late img.Image _image;
+  img.Image _editedImage = img.Image(width:1,height: 1);
+  String? _editedImagePath;
+  double _blurAmount = 0;
+  bool _isGrayscale = false;
+  bool _isSegmented = false;
+  bool _isNoisy = false; // Flag for noise effect
+  bool _isSharp = false; // Flag for sharpness effect
+  bool _isFlippedVertically = false;
+  bool _isFlippedHorizontally = false;
 
-  late File imageFile;
-  late img.Image originalImage; // Cache the original image
-  late img.Image editedImage; // Store the edited image
-
-  Uint8List? editedImageBytes; // Nullable, initially null
+  List<String> filters = ['None', 'Grayscale', 'Invert', 'Brightness', 'Contrast'];
+  String selectedFilter = 'None';
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
-    imageFile = File(widget.imagePath);
-
-    // Load and decode the original image only once
-    originalImage = img.decodeImage(imageFile.readAsBytesSync())!;
-    editedImage = originalImage; // Start with original image
-    _applyImageChanges(); // Apply initial changes (none)
+    _loadImage();
   }
 
-  // List of settings with icons and labels
-  final List<Map<String, dynamic>> settings = [
-    {'icon': Icons.brightness_6, 'label': 'Brightness'},
-    {'icon': Icons.contrast, 'label': 'Contrast'},
-    {'icon': Icons.colorize, 'label': 'Saturation'},
-    {'icon': Icons.color_lens, 'label': 'Hue'},
-    {'icon': Icons.crop_rotate, 'label': 'Rotate'},
-    {'icon': Icons.aspect_ratio, 'label': 'Resize'},
-  ];
-
-  Widget _buildImageDisplay() {
-    return Expanded(
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8.0), // Adjust margin as needed
-        child: FittedBox(
-          fit: BoxFit.cover, // Ensures the image covers the screen without stretching
-          child: editedImageBytes != null
-              ? Image.memory(editedImageBytes!) // Display the edited image
-              : Image.file(imageFile), // Display the original image initially
-        ),
-      ),
-    );
+  Future<void> _loadImage() async {
+    try {
+      final imageBytes = await File(widget.imagePath).readAsBytes();
+      final image = img.decodeImage(imageBytes);
+      if (image != null) {
+        setState(() {
+          _image = image;
+          _editedImage = img.copyResize(_image, width: 600);
+        });
+      } else {
+        throw Exception("Failed to decode image.");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading image: $e')),
+      );
+    }
   }
 
-  // Widget to render the top bar with Cancel and Save buttons
-  AppBar _buildTopBar() {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      leading: TextButton(
-        onPressed: () {
-          Navigator.pop(context);
-        },
-        child: const Text('Cancel', style: TextStyle(color: Colors.yellow,fontSize: 10)),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () async {
-            // Save the image with the applied changes
-            imageFile.writeAsBytesSync(editedImageBytes!); // Save the edited image bytes to file
-            Navigator.pop(context, imageFile);
-          },
-          child: const Text('Save', style: TextStyle(color: Colors.yellow,fontSize:10)),
-        ),
-      ],
-    );
+  Future<void> _saveImage() async {
+    try {
+      final Uint8List bytes = Uint8List.fromList(img.encodePng(_editedImage));
+      final Directory tempDir = await getTemporaryDirectory();
+      final String tempPath = '${tempDir.path}/edited_image.png';
+      final File file = File(tempPath)..writeAsBytesSync(bytes);
+
+      setState(() {
+        _editedImagePath = tempPath;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Image saved to $tempPath')),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving image: $e')),
+      );
+    }
   }
 
-  // Function to render the bottom bar with icons and labels
-  Widget _buildBottomBar() {
-    return SizedBox(
-      height: 90,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: List.generate(settings.length, (index) {
-          return GestureDetector(
-            onTap: () {
-              setState(() {
-                selectedSettingIndex = index;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0,vertical: 20.0),
-              child: Column(
-                children: [
-                  Icon(settings[index]['icon'], size: 30),
-                  Text(settings[index]['label']),
-                ],
-              ),
-            ),
-          );
-        }),
-      ),
-    );
+  Future<void> _saveToGallery() async {
+    try {
+      final Uint8List bytes = Uint8List.fromList(img.encodePng(_editedImage));
+      final result = await ImageGallerySaver.saveImage(bytes, quality: 100);
+
+      if (result['isSuccess']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image saved to gallery.')),
+        );
+      } else {
+        throw Exception("Failed to save image.");
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error saving to gallery: $e')),
+      );
+    }
   }
 
-  Widget _buildSlider() {
-    if (selectedSettingIndex == -1) return const SizedBox.shrink();
-
-    String label = settings[selectedSettingIndex]['label'];
-    double currentValue;
-    switch (label) {
-      case 'Brightness':
-        currentValue = brightnessValue;
-        break;
-      case 'Contrast':
-        currentValue = contrastValue;
-        break;
-      case 'Saturation':
-        currentValue = saturationValue;
-        break;
-      case 'Hue':
-        currentValue = hueValue;
-        break;
-      default:
-        currentValue = 0;
-        break;
-    }
-
-    return Column(
-      children: [
-        Text('$label Value: ${currentValue.toStringAsFixed(1)}'),
-        Slider(
-          value: currentValue,
-          min: -100,
-          max: 100,
-          onChanged: (value) {
-            setState(() {
-              switch (label) {
-                case 'Brightness':
-                  brightnessValue = value;
-                  break;
-                case 'Contrast':
-                  contrastValue = value;
-                  break;
-                case 'Saturation':
-                  saturationValue = value;
-                  break;
-                case 'Hue':
-                  hueValue = value;
-                  break;
-              }
-              _applyImageChanges(); // Apply image changes on slider movement
-            });
-          },
-        ),
-      ],
-    );
-  }
-
-  Future<void> _applyImageChanges() async {
-    // Start by resetting to the original image before re-applying all edits
-    editedImage = img.copyResize(originalImage);
-
-    // Apply brightness
-    if (brightnessValue != 0) {
-      editedImage = img.adjustColor(editedImage, brightness: brightnessValue / 100);
-    }
-
-    // Apply contrast
-    if (contrastValue != 0) {
-      editedImage = img.adjustColor(editedImage, contrast: 1 + contrastValue / 100);
-    }
-
-    // Apply saturation
-    if (saturationValue != 0) {
-      editedImage = img.adjustColor(editedImage, saturation: saturationValue / 100);
-    }
-
-    // Apply hue
-    if (hueValue != 0) {
-      editedImage = img.adjustColor(editedImage, hue: hueValue);
-    }
-
-    // Save the modified image in memory (not writing to file system yet)
-    List<int> imageBytes = img.encodeJpg(editedImage); // Encode to JPEG
-    Uint8List updatedImageBytes = Uint8List.fromList(imageBytes);
-
-    // Update the UI with the edited image
+  void _rotateImage() {
     setState(() {
-      editedImageBytes = updatedImageBytes;
+      _editedImage = img.copyRotate(_editedImage, angle: 90);
+    });
+  }
+
+  void _applyFilter(String filter) {
+    setState(() {
+      selectedFilter = filter;
+
+      switch (filter) {
+        case 'Grayscale':
+          _editedImage = img.grayscale(_image);
+          break;
+        case 'Invert':
+          _editedImage = _applyInvert(_image);
+          break;
+        case 'Brightness':
+          _editedImage = _applyBrightness(_image, 1.2); // Increase brightness by 20%
+          break;
+        case 'Contrast':
+          _editedImage = _applyContrast(_image, 1.5); // Increase contrast by 50%
+          break;
+        default:
+          _editedImage = _image;
+      }
+    });
+  }
+
+  img.Image _applyInvert(img.Image image) {
+    return img.invert(image);
+  }
+
+  img.Image _applyBrightness(img.Image image, double factor) {
+    return img.adjustColor(image, brightness: factor);
+  }
+
+  img.Image _applyContrast(img.Image image, double factor) {
+    return img.adjustColor(image, contrast: factor);
+  }
+
+  img.Image _applySharpness(img.Image image) {
+    return img.convolution(image, filter: [
+      0, -1, 0,
+      -1, 9, -1,
+      0, -1, 0
+    ]);
+  }
+
+  void _undoChanges() {
+    setState(() {
+      _editedImage = _image;
+      _blurAmount = 0;
+      _isGrayscale = false;
+      _isSegmented = false;
+      _isSharp = false;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Changes undone.')),
+    );
+  }
+
+  void _closeEditor() {
+    Navigator.pop(context);
+  }
+
+  void _toggleNoiseOverlay() {
+    setState(() {
+      _isNoisy = !_isNoisy;
+    });
+  }
+
+  void _toggleSharpness() {
+    setState(() {
+      _isSharp = !_isSharp;
+      if (_isSharp) {
+        _editedImage = _applySharpness(_image);
+      } else {
+        _editedImage = _image;
+      }
+    });
+  }
+
+  // Flip image vertically
+  void _flipVertically() {
+    setState(() {
+      _isFlippedVertically = !_isFlippedVertically;
+      _editedImage = _isFlippedVertically
+          ? img.flipVertical(_image)
+          : _image;
+    });
+  }
+
+  // Flip image horizontally
+  void _flipHorizontally() {
+    setState(() {
+      _isFlippedHorizontally = !_isFlippedHorizontally;
+      _editedImage = _isFlippedHorizontally
+          ? img.flipHorizontal(_image)
+          : _image;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xff465189),
-      appBar: _buildTopBar(),
-      body: Container(
-        child: Column(
-          children: [
-            _buildImageDisplay(),
-            _buildSlider(), // Display the slider when a setting is selected
-            _buildBottomBar(),
-          ],
-        ),
+      backgroundColor: const Color(0xff19166f),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        title: const Text(
+          'Edit Screen',
+          style: TextStyle(color: Colors.amber),
+        ).tr(),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.amber),
+            onPressed: _closeEditor, // Close the editor
+          ),
+          IconButton(
+            icon: const Icon(Icons.save, color: Colors.amber),
+            onPressed: _saveToGallery,
+          ),
+        ],
       ),
+      body: Column(
+        children: [
+          Expanded(
+            child: Stack(
+              children: [
+                Image.memory(
+                  Uint8List.fromList(img.encodePng(_editedImage)),
+                  width: double.infinity,
+                  fit: BoxFit.contain,
+                ),
+                if (_isNoisy)
+                  Opacity(
+                    opacity: 0.5,
+                    child: Image.memory(
+                      Uint8List.fromList(img.encodePng(_image)),
+                      height: double.infinity,
+                      width: double.infinity,
+                      fit: BoxFit.fill,
+                    ),
+                  ),
+                BackdropFilter(
+                  filter: ImageFilter.blur(
+                    sigmaX: _blurAmount,
+                    sigmaY: _blurAmount,
+                  ),
+                  child: Container(color: Colors.transparent),
+                ),
+              ],
+            ),
+          ),
+          Slider(
+            min: 0,
+            max: 10,
+            value: _blurAmount,
+            onChanged: (value) => setState(() => _blurAmount = value),
+            label: 'Blur: ${_blurAmount.toStringAsFixed(1)}',
+          ),
+          DropdownButton<String>(
+            value: selectedFilter,
+            onChanged: (String? newFilter) {
+              if (newFilter != null) {
+                _applyFilter(newFilter);
+              }
+            },
+            items: filters.map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(value),
+              );
+            }).toList(),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildIconButton(Icons.rotate_right, 'Rotate'.tr(), _rotateImage),
+              _buildIconButton(
+                _isGrayscale ? Icons.filter_b_and_w : Icons.filter_none,
+                'Grayscale'.tr(),
+                    () {
+                  setState(() {
+                    _isGrayscale = !_isGrayscale;
+                    _editedImage = _isGrayscale ? img.grayscale(_image) : _image;
+                  });
+                },
+              ),
+              _buildIconButton(
+                Icons.refresh,
+                'Flip Horizontal'.tr(),
+                _flipHorizontally,
+              ),
+              _buildIconButton(
+                Icons.flip,
+                'Flip Vertical'.tr(),
+                _flipVertically,
+              ),
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildIconButton(Icons.api_sharp, 'Sharpness'.tr(), _toggleSharpness),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildIconButton(IconData icon, String label, VoidCallback onTap) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: Icon(icon, color: Colors.white),
+          onPressed: onTap,
+        ),
+        Text(label, style: TextStyle(color: Colors.white)),
+      ],
     );
   }
 }

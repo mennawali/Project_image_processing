@@ -7,5 +7,15 @@
   "upload_from_gallery": "Upload from Gallery",
   "general": "General",
   "nature": "Nature",
-  "sports": "Sports"
+  "sports": "Sports",
+  "Rotate": "Rotate",
+  "Grayscale": "Grayscale",
+  "Flip Horizontal": "Flip Horizontal ",
+  "Flip Vertical": "Flip Vertical",
+  "Sharpness": "Sharpness",
+  "None": "None",
+  "Invert": "Invert",
+  "Brightness": "Brightness",
+  "Contrast": "Contrast",
+  "Edit Screen": "Edit Screen"
 }

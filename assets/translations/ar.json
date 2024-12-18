@@ -7,7 +7,16 @@
   "upload_from_gallery": "ارفع من المعرض",
   "general": "عام",
   "nature": "طبيعة",
-  "sports": "رياضة"
-
+  "sports": "رياضة",
+  "Rotate": "تدوير",
+  "Grayscale": "تدرج رمادي",
+  "Flip Horizontal": "تدوير افقي ",
+  "Flip Vertical": "تدوير راسي",
+  "Sharpness": "حديه",
+  "None": "لا شئ",
+  "Invert": "تحويل",
+  "Brightness": "سطوع",
+  "Contrast": "معاكس",
+  "Edit Screen": "شاشه التحرير"
 
 }
